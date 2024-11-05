@@ -7,6 +7,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 moveInput;
     private Rigidbody rb;
     private Animator anim;
+    private bool IsSprinting = false;
+    private float speed;
 
     public float runSpeed = 5f;
     public float walkSpeed = 3f;
@@ -26,6 +28,9 @@ public class PlayerMovement : MonoBehaviour
         inputActions.Player.Move.performed += OnMove;
         inputActions.Player.Move.canceled += OnMove;
         inputActions.Player.Jump.performed += OnJump;
+        inputActions.Player.Jump.canceled += OnJump;
+        inputActions.Player.Sprint.performed += OnSprint;
+        inputActions.Player.Sprint.canceled += OnSprint;
     }
 
     private void OnDisable()
@@ -34,6 +39,14 @@ public class PlayerMovement : MonoBehaviour
         inputActions.Player.Move.performed -= OnMove;
         inputActions.Player.Move.canceled -= OnMove;
         inputActions.Player.Jump.performed -= OnJump;
+        inputActions.Player.Jump.canceled -= OnJump;
+        inputActions.Player.Sprint.performed -= OnSprint;
+        inputActions.Player.Sprint.canceled -= OnSprint;
+    }
+
+    private void OnSprint(InputAction.CallbackContext context)
+    {
+        IsSprinting = context.ReadValueAsButton();
     }
 
     private void OnMove(InputAction.CallbackContext context)
@@ -49,21 +62,53 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        Vector3 move = new Vector3(moveInput.x, 0, moveInput.y) * walkSpeed * Time.fixedDeltaTime;
-        rb.MovePosition(rb.position + move);
+        Vector3 move;
 
-        if (moveInput != Vector2.zero) 
+        if (IsSprinting)
         {
-            anim.SetBool("IsWalking", true);
-            Quaternion targetRotation = Quaternion.LookRotation(new Vector3(moveInput.x, 0, moveInput.y)); 
-            rb.rotation = Quaternion.RotateTowards(rb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime); 
+            speed = runSpeed;
         }
         else
         {
-            anim.SetBool("IsWalking", false);
+            speed = walkSpeed;
         }
+        move = new Vector3(moveInput.x, 0, moveInput.y) * speed * Time.deltaTime;
+
+        //rb.MovePosition(rb.position + move);
+        transform.position += move;
+
+        if (moveInput != Vector2.zero)
+        {
+
+            Quaternion targetRotation = Quaternion.LookRotation(new Vector3(moveInput.x, 0, moveInput.y));
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+        else
+        {
+            speed = 0f;
+        }
+        anim.SetFloat("VerticalSpeed", speed);
+
+
+    }
+
+    private void FixedUpdate()
+    {
+        //Vector3 move = new Vector3(moveInput.x, 0, moveInput.y) * walkSpeed * Time.fixedDeltaTime;
+        //rb.MovePosition(rb.position + move);
+
+        //if (moveInput != Vector2.zero) 
+        //{
+        //    anim.SetBool("IsWalking", true);
+        //    Quaternion targetRotation = Quaternion.LookRotation(new Vector3(moveInput.x, 0, moveInput.y)); 
+        //    rb.rotation = Quaternion.RotateTowards(rb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime); 
+        //}
+        //else
+        //{
+        //    anim.SetBool("IsWalking", false);
+        //}
 
 
     }
